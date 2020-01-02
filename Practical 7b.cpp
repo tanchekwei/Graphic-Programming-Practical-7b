@@ -17,7 +17,7 @@ GLuint texture = 0;
 BITMAP BMP;
 HBITMAP hBMP = NULL;
 
-string textures[3] = {"Brick.bmp", "Wood.bmp", "Metal.bmp"};
+// string textures[3] = {"Brick.bmp", "Wood.bmp", "Metal.bmp"};
 int textureNo = 0;
 
 string projectRoot = "D:\\TARUC\\Sem 5\\BACS2173 Graphics Programming\\Practical7b\\";
@@ -75,38 +75,65 @@ extern "C"
 //     GetObject(hBMP, sizeof(BMP), &BMP);
 // }
 
+////////////////////////////////////
+string textureNames[50] = {};
+int textureCount = 0;
+GLuint *textures = new GLuint[10];
+
 void initTexture(string textureName)
 {
-    glDisable(GL_TEXTURE_2D);
-    glDeleteTextures(1, &texture);
-
-    strcpy(temp, projectRoot.c_str());
-    strcat(temp, textureName.c_str());
-    strcat(temp, ".bmp");
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    HBITMAP hBMP = (HBITMAP)LoadImage(GetModuleHandle(NULL), temp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
-    GetObject(hBMP, sizeof(BMP), &BMP);
+    bool found = false;
+    int texturePointer = -1;
+    for (int i = 0; i < textureCount + 1; i++)
+    {
+        if (textureNames[i] == textureName)
+        {
+            found = true;
+            texturePointer = i;
+            break;
+        }
+    }
 
     glEnable(GL_TEXTURE_2D);
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                    GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BMP.bmWidth,
-                 BMP.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, BMP.bmBits);
+    if (found)
+    {
+        // glActiveTexture(GL_TEXTURE0 + texturePointer); // Texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textures[texturePointer]);
+    }
+    else
+    {
+        // glDisable(GL_TEXTURE_2D);
+        // glDeleteTextures(1, &texture);
 
-    DeleteObject(hBMP);
+        strcpy(temp, projectRoot.c_str());
+        strcat(temp, textureName.c_str());
+        strcat(temp, ".bmp");
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        HBITMAP hBMP = (HBITMAP)LoadImage(GetModuleHandle(NULL), temp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
+        GetObject(hBMP, sizeof(BMP), &BMP);
+
+        // glActiveTexture(GL_TEXTURE0 + textureCount); // Texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textures[textureCount]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BMP.bmWidth,
+                     BMP.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+        DeleteObject(hBMP);
+        textureNames[textureCount] = textureName;
+        textureCount++;
+    }
 }
-
+////////////////////////////////////////////
 void removeTexture()
 {
-    glDisable(GL_TEXTURE_2D);
-    glDeleteTextures(1, &texture);
+    // glDisable(GL_TEXTURE_2D);
+    // glDeleteTextures(1, &texture);
 }
 
 void controls(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -114,6 +141,7 @@ void controls(GLFWwindow *window, int key, int scancode, int action, int mods)
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
         if (key == GLFW_KEY_ESCAPE)
         {
+            delete textures; // clean up
             printf("v: %f\tv1: %f\tv2: %f\tv3: %f\n", v, v1, v2, v3);
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
@@ -1044,6 +1072,7 @@ int main(int argc, char **argv)
         glMatrixMode(GL_MODELVIEW);
 
         // initTexture(textureNo);
+        glGenTextures(10, textures);
 
         while (!glfwWindowShouldClose(window))
         {
